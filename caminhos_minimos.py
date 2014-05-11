@@ -28,7 +28,7 @@ class _Caminhos_Minimos:
 
     def processar_arestas(self, ponto_atual):
         for ponto_alvo in self.grafo.arestas[ponto_atual]:
-            self.distancia_prev[ponto_alvo] = self.grafo.calc_prev_peso(ponto_alvo, self.ponto_destino)
+            self.distancia_prev[ponto_alvo] = self.grafo.calc_previsao_peso(ponto_alvo, self.ponto_destino)
             if not ponto_alvo in self.visitados:
                 if ponto_alvo not in self.distancia or self.distancia[ponto_alvo] > self.distancia[ponto_atual] \
                         + self.grafo.pesos[ponto_atual, ponto_alvo]:
@@ -49,7 +49,7 @@ class _Caminhos_Minimos:
     def executar(self):
         ponto_atual = self.buscar_origem()
         while self.nao_visitados:
-            self.distancia_prev[ponto_atual] = self.grafo.calc_prev_peso(ponto_atual, self.ponto_destino)
+            self.distancia_prev[ponto_atual] = self.grafo.calc_previsao_peso(ponto_atual, self.ponto_destino)
             self.processar_arestas(ponto_atual)
             self.distancia_visitados[ponto_atual] = self.distancia[ponto_atual]
             del self.distancia[ponto_atual]

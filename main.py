@@ -25,7 +25,7 @@ dados_ast = OrderedDict()
 
 conexao = Conexao('grafos_db')
 grafo = Grafo(conexao.get_identificacao())
-grafo.gerar_grafo_cidade(rnd.randint(1000,1500),rnd.randint(1000,1500),rnd.randint(800,1200),rnd.randint(800,1200),rnd.uniform(0.04,0.1))
+grafo.gerar_grafo_cidade(rnd.randint(100,150),rnd.randint(100,150),rnd.randint(800,1200),rnd.randint(800,1200),rnd.uniform(0.04,0.1))
 dados_grafo['id'] = grafo.ident
 dados_grafo['num_pontos'] = len(grafo)
 dados_grafo['num_arestas'] = grafo.num_arestas
@@ -45,7 +45,7 @@ ast = A_Star(grafo)
 ast.ponto_origem = origem
 ast.ponto_destino = destino
 
-prof = cp.Profile(time_unit=.0001)
+prof = cp.Profile()
 prof.enable()
 dij.executar()
 prof.disable()
@@ -57,7 +57,7 @@ dados_dij['tempo'] = extrair_tempo(prof)
 dados_dij['id'] = dij.grafo.ident
 del prof
 
-prof = cp.Profile(time_unit=.0001)
+prof = cp.Profile()
 prof.enable()
 ast.executar()
 prof.disable()
