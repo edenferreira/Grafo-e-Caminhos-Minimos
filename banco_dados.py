@@ -1,5 +1,6 @@
-__author__ = 'Éden Thiago Ferreira'
+__author__ = 'Eden Thiago Ferreira'
 import sqlite3 as sql
+from collections import OrderedDict
 
 
 class Conexao:
@@ -10,14 +11,14 @@ class Conexao:
         return self.banco
 
     def criar_tabela_identificacao(self):
-        print("Criando tabela de identificação")
+        print("Criando tabela de identificacao")
         comando_sql = """create table ident_grafo
                          (id   integer primary key autoincrement,
                           dump integer);"""
         con = sql.connect(self.banco)
         con.execute(comando_sql)
         con.close()
-        print("Tabela de identificação criada")
+        print("Tabela de identificacao criada")
 
     def criar_tabela_grafos(self):
         print("Criando tabela informacao_grafo")
@@ -70,7 +71,7 @@ class Conexao:
         con = sql.connect(self.banco)
         con.execute(comando_sql)
         con.commit()
-        print("Iniciada tabela de identificação de grafos")
+        print("Iniciada tabela de identificacao de grafos")
         con.close()
 
     def inserir_grafo(self, grafo):
@@ -151,7 +152,7 @@ class Conexao:
                        from informacao_grafo g,
                             informacao_dijkstra d
                       where g.id = d.id;"""
-        dicionario_dados = {}
+        dicionario_dados = OrderedDict()
         dicionario_dados['id'] = list()
         dicionario_dados['num_pontos'] = list()
         dicionario_dados['num_arestas'] = list()
@@ -179,7 +180,7 @@ class Conexao:
                            from informacao_grafo g,
                                 informacao_astar a
                           where g.id = a.id;"""
-        dicionario_dados = {}
+        dicionario_dados = OrderedDict()
         dicionario_dados['id'] = list()
         dicionario_dados['num_pontos'] = list()
         dicionario_dados['num_arestas'] = list()

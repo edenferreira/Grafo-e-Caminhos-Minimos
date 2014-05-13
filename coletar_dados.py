@@ -1,4 +1,4 @@
-__author__ = 'Éden Thiago Ferreira'
+__author__ = 'Eden Thiago Ferreira'
 import cProfile as cp
 import pstats as pst
 from collections import OrderedDict

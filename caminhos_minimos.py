@@ -1,4 +1,4 @@
-__author__ = 'Éden Thiago Ferreira'
+__author__ = 'Eden Thiago Ferreira'
 
 
 class _Caminhos_Minimos:

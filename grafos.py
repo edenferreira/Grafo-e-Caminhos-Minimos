@@ -1,11 +1,11 @@
-__author__ = 'Éden Thiago Ferreira'
+__author__ = 'Eden Thiago Ferreira'
 from collections import defaultdict
 import random as rnd
 from math import sqrt
 
 
 class Grafo:
-    """Mantém coleções de pontos, arestas, e seus atributos, como posições, pesos, direção"""
+    """Mantem colecoes de pontos, arestas, e seus atributos, como posicoes, pesos, direcao"""
 
     def __init__(self, ident=0):
         self.ident = ident
