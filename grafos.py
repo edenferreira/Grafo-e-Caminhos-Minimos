@@ -16,6 +16,25 @@ class Grafo:
         self.pesos = {}
         self.num_arestas = 0
 
+    def __init__(self, path_arquivo, nome_mapa, ident=0):
+        self.ident = ident
+        self.nome_mapa = nome_mapa
+        self.pontos = set()
+        self.pos_pontos = defaultdict()
+        self.arestas = defaultdict(list)
+        self.arestas_chegando = defaultdict(list)
+        self.pesos = {}
+        self.num_arestas = 0
+        with open(path_arquivo+'.co','r') as arq:
+            for li in arq.readlines():
+                s = li.strip('v ').split(' ')
+                self.add_ponto(int(li[0]),int(li[1]),int(li[2]))
+
+        with open(path_arquivo+'.gr','r') as arq:
+            for li in arq.readlines():
+                s = li.strip('a ').split(' ')
+                self.add_aresta(int(li[0]),int(li[1]),int(li[2]))
+
     def __len__(self):
         return len(self.pontos)
 

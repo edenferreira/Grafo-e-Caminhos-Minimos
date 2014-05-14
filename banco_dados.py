@@ -32,6 +32,18 @@ class Conexao:
         con.close()
         print("Tabela informacao_grafo criada")
 
+    def criar_tabela_grafos_mapa(self):
+        print("Criando tabela informacao_grafo_mapa")
+        comando_sql = """create table informacao_grafo_mapa
+                         (id          integer primary key not null,
+                          nome_mapa   text    not null,
+                          num_pontos  integer not null,
+                          num_arestas integer not_null;"""
+        con = sql.connect(self.banco)
+        con.execute(comando_sql)
+        con.close()
+        print("Tabela informacao_grafo_mapa criada")
+
     def criar_tabela_dijkstra(self):
         print("Criando tabela informacao_dijkstra")
         comando_sql = """create table informacao_dijkstra
@@ -84,6 +96,16 @@ class Conexao:
         con.close()
         print("Grafo inserido corretamente")
 
+    def inserir_grafo_mapa(self,grafo):
+        print("Inserindo grafo de mapa")
+        comando_sql = """insert into informacao_grafo_mapa(id,nome_mapa,num_pontos,num_arestas)
+                         values(?,?,?,?)"""
+        con = sql.connect(self.banco)
+        con.execute(comando_sql, (grafo.ident, grafo.nome_mapa, len(grafo), grafo.num_arestas))
+        con.commit()
+        con.close()
+        print("Grafo de mapa inserido corretamente")
+
     def inserir_dijkstra(self, dados):
         print("Inserindo dados de dijkstra")
         comando_sql = """insert into informacao_dijkstra(ponto_origem,ponto_destino,caminho,num_passos,distancia_total,tempo,id)
@@ -131,6 +153,14 @@ class Conexao:
         con.close()
         return lista
 
+    def get_grafos_mapa(self):
+        comando_sql = """select *
+                           from informacao_grafo_mapa;"""
+        con = sql.connect(self.banco)
+        lista = self.get_lista_de_cursor(con.execute(comando_sql))
+        con.close()
+        return lista
+
     def get_dijkstra(self):
         comando_sql = """select *
                            from informacao_dijkstra;"""
@@ -148,12 +178,18 @@ class Conexao:
         return lista
 
     def get_tempos_dijkstra(self):
-        comando_sql = """select g.id, g.num_pontos, g.num_arestas, d.ponto_origem, d.ponto_destino, d.num_passos, d.distancia_total, d.tempo
+        comando_sql = """select g.id, 'grafo aleatorio' nome_mapa, g.num_pontos, g.num_arestas, d.ponto_origem, d.ponto_destino, d.num_passos, d.distancia_total, d.tempo
                        from informacao_grafo g,
                             informacao_dijkstra d
-                      where g.id = d.id;"""
+                      where g.id = d.id
+                      union
+                      select m.id, m.nome_mapa, m.num_pontos, m.num_arestas, d.ponto_origem, d.ponto_destino, d.num_passos, d.distancia_total, d.tempo
+                        from informacao_grafo_mapa m,
+                             informacao_dijkstra d
+                      where m.id = d.id;"""
         dicionario_dados = OrderedDict()
         dicionario_dados['id'] = list()
+        dicionario_dados['nome_mapa'] = list()
         dicionario_dados['num_pontos'] = list()
         dicionario_dados['num_arestas'] = list()
         dicionario_dados['ponto_origem'] = list()
@@ -161,27 +197,35 @@ class Conexao:
         dicionario_dados['num_passos'] = list()
         dicionario_dados['distancia_total'] = list()
         dicionario_dados['tempo'] = list()
+
         con = sql.connect(self.banco)
         lista = self.get_lista_de_cursor(con.execute(comando_sql))
         for linha in lista:
             dicionario_dados['id'].append(linha[0])
-            dicionario_dados['num_pontos'].append(linha[1])
-            dicionario_dados['num_arestas'].append(linha[2])
-            dicionario_dados['ponto_origem'].append(linha[3])
-            dicionario_dados['ponto_destino'].append(linha[4])
-            dicionario_dados['num_passos'].append(linha[5])
-            dicionario_dados['distancia_total'].append(linha[6])
-            dicionario_dados['tempo'].append(linha[7])
+            dicionario_dados['nome_mapa'].append(linha[1])
+            dicionario_dados['num_pontos'].append(linha[2])
+            dicionario_dados['num_arestas'].append(linha[3])
+            dicionario_dados['ponto_origem'].append(linha[4])
+            dicionario_dados['ponto_destino'].append(linha[5])
+            dicionario_dados['num_passos'].append(linha[6])
+            dicionario_dados['distancia_total'].append(linha[7])
+            dicionario_dados['tempo'].append(linha[8])
         con.close()
         return dicionario_dados
 
     def get_tempos_astar(self):
-        comando_sql = """select g.id, g.num_pontos, g.num_arestas, a.ponto_origem, a.ponto_destino, a.num_passos, a.distancia_total, a.tempo
+        comando_sql = """select g.id,  'grafo aleatorio' nome_mapa,g.num_pontos, g.num_arestas, a.ponto_origem, a.ponto_destino, a.num_passos, a.distancia_total, a.tempo
                            from informacao_grafo g,
                                 informacao_astar a
-                          where g.id = a.id;"""
+                          where g.id = a.id
+                          union
+                          select m.id, m.nome_mapa, m.num_pontos, m.num_arestas, a.ponto_origem, a.ponto_destino, a.num_passos, a.distancia_total, a.tempo
+                            from informacao_grafo_mapa m,
+                                 informacao_astar a
+                          where m.id = a.id;"""
         dicionario_dados = OrderedDict()
         dicionario_dados['id'] = list()
+        dicionario_dados['nome_mapa'] = list()
         dicionario_dados['num_pontos'] = list()
         dicionario_dados['num_arestas'] = list()
         dicionario_dados['ponto_origem'] = list()
@@ -194,13 +238,14 @@ class Conexao:
         lista = self.get_lista_de_cursor(con.execute(comando_sql))
         for linha in lista:
             dicionario_dados['id'].append(linha[0])
-            dicionario_dados['num_pontos'].append(linha[1])
-            dicionario_dados['num_arestas'].append(linha[2])
-            dicionario_dados['ponto_origem'].append(linha[3])
-            dicionario_dados['ponto_destino'].append(linha[4])
-            dicionario_dados['num_passos'].append(linha[5])
-            dicionario_dados['distancia_total'].append(linha[6])
-            dicionario_dados['tempo'].append(linha[7])
+            dicionario_dados['nome_mapa'].append(linha[1])
+            dicionario_dados['num_pontos'].append(linha[2])
+            dicionario_dados['num_arestas'].append(linha[3])
+            dicionario_dados['ponto_origem'].append(linha[4])
+            dicionario_dados['ponto_destino'].append(linha[5])
+            dicionario_dados['num_passos'].append(linha[6])
+            dicionario_dados['distancia_total'].append(linha[7])
+            dicionario_dados['tempo'].append(linha[8])
         con.close()
         return dicionario_dados
 
@@ -208,7 +253,12 @@ class Conexao:
         comando_sql = """select g.id, d.caminho
                            from informacao_grafo g,
                                 informacao_dijkstra d
-                          where g.id = d.id;"""
+                          where g.id = d.id
+                          union
+                        select m.id, d.caminho
+                          from informacao_grafo_mapa m,
+                               informacao_dijkstra d
+                         where m.id = d.id;"""
         con = sql.connect(self.banco)
         lista = self.get_lista_de_cursor(con.execute(comando_sql))
         con.close()
@@ -218,7 +268,12 @@ class Conexao:
         comando_sql = """select g.id, a.caminho
                            from informacao_grafo g,
                                 informacao_astar a
-                          where g.id = a.id;"""
+                          where g.id = a.id
+                          union
+                        select m.id, a.caminho
+                          from informacao_grafo_mapa m,
+                               informacao_astar a
+                         where m.id = a.id;"""
         con = sql.connect(self.banco)
         lista = self.get_lista_de_cursor(con.execute(comando_sql))
         con.close()
