@@ -25,13 +25,14 @@ def executar_coleta_mapa(nome_mapa,path_arquivo):
     dados_ast = OrderedDict()
 
     conexao = Conexao('grafos_db')
-    grafo = Grafo(path_arquivo,nome_mapa,conexao.get_identificacao())
+    grafo = Grafo(conexao.get_identificacao())
+    grafo.gerar_grafo_mapa(path_arquivo,nome_mapa)
     dados_grafo['id'] = grafo.ident
     dados_grafo['nome_mapa'] = grafo.nome_mapa
     dados_grafo['num_pontos'] = len(grafo)
     dados_grafo['num_arestas'] = grafo.num_arestas
     dados_grafo['max_pontos'] = sqrt(((grafo.max_x)**2) + ((grafo.max_y)**2))
-    conexao.inserir_grafo(grafo)
+    conexao.inserir_grafo_mapa(grafo)
 
     origem, destino = rnd.sample(grafo.pontos,2)
     dados_dij['ponto_origem'] = origem
