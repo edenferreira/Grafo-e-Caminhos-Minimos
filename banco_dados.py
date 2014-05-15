@@ -38,7 +38,7 @@ class Conexao:
                          (id          integer primary key not null,
                           nome_mapa   text    not null,
                           num_pontos  integer not null,
-                          num_arestas integer not_null;"""
+                          num_arestas integer not_null);"""
         con = sql.connect(self.banco)
         con.execute(comando_sql)
         con.close()
@@ -255,10 +255,10 @@ class Conexao:
                                 informacao_dijkstra d
                           where g.id = d.id
                           union
-                        select m.id, d.caminho
-                          from informacao_grafo_mapa m,
-                               informacao_dijkstra d
-                         where m.id = d.id;"""
+                         select m.id, d.caminho
+                           from informacao_grafo_mapa m,
+                                informacao_dijkstra d
+                          where m.id = d.id;"""
         con = sql.connect(self.banco)
         lista = self.get_lista_de_cursor(con.execute(comando_sql))
         con.close()
@@ -270,10 +270,10 @@ class Conexao:
                                 informacao_astar a
                           where g.id = a.id
                           union
-                        select m.id, a.caminho
-                          from informacao_grafo_mapa m,
-                               informacao_astar a
-                         where m.id = a.id;"""
+                         select m.id, a.caminho
+                           from informacao_grafo_mapa m,
+                                informacao_astar a
+                          where m.id = a.id;"""
         con = sql.connect(self.banco)
         lista = self.get_lista_de_cursor(con.execute(comando_sql))
         con.close()
