@@ -19,7 +19,7 @@ class Coletor:
 
         self.grafo = grafo
         if nome_mapa is None:
-            self.grafo.gerar_grafo(rnd.uniform(1200,1600),rnd.uniform(1200,1600),
+            self.grafo.gerar_grafo(rnd.randint(1200,1600),rnd.randint(1200,1600),
                                    rnd.uniform(800,1200),rnd.uniform(800,1200),rnd.uniform(0.02,0.1))
         else:
             self.grafo.gerar_grafo_mapa(path_grafos[nome_mapa],nome_mapa)
