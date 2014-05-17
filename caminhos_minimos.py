@@ -1,82 +1,86 @@
 __author__ = 'Eden Thiago Ferreira'
 
 
-class _Caminhos_Minimos:
+class __CaminhosMinimos:
+    """Classe base para caminhos minimos ponto a ponto"""
+
     def __init__(self, grafo):
         self.grafo = grafo
-        self.nao_visitados = set(self.grafo.pontos)
-        self.visitados = set()
-        self.distancia = {}
-        self.distancia_visitados = {}
+        self.nao_visit = set(self.grafo.pontos)
+        self.visit = set()
+        self.dist = {}
+        self.dist_visit = {}
         self.anterior = {}
         self.num_passos = 0
-        self.distancia_prev = {}
-        self.distancia_prev_fronteira = {}
-        self.ponto_origem = None
-        self.ponto_destino = None
+        self.dist_prev = {}
+        self.dist_prev_front = {}
+        self.caminho = list()
+        self.dist_total = 0
+        self.pt_ori = None
+        self.pt_dest = None
         self.executou = False
 
-    def buscar_origem(self):
-        self.distancia[self.ponto_origem] = 0
-        self.distancia_prev_fronteira[self.ponto_origem] = self.grafo.calc_previsao_peso(self.ponto_origem,
-                                                                                         self.ponto_destino)
-        return self.ponto_origem
+    def get_origem(self):
+        self.dist[self.pt_ori] = 0
+        self.dist_prev_front[self.pt_ori] = self.grafo.calc_prev_peso(self.pt_ori,
+                                                                      self.pt_dest)
+        return self.pt_ori
 
-    def atualizar_distancias(self, ponto_alvo, ponto_atual):
-        self.distancia_prev_fronteira[ponto_alvo] = self.distancia[ponto_atual] + self.grafo.pesos[
-            ponto_atual, ponto_alvo] + self.distancia_prev[ponto_alvo]
+    def up_dist(self, ponto_alvo, ponto_atual):
+        self.dist_prev_front[ponto_alvo] = self.dist[ponto_atual] + self.grafo.pesos[ponto_atual, ponto_alvo] \
+                                           + self.dist_prev[ponto_alvo]
 
-    def processar_arestas(self, ponto_atual):
-        for ponto_alvo in self.grafo.arestas[ponto_atual]:
-            self.distancia_prev[ponto_alvo] = self.grafo.calc_previsao_peso(ponto_alvo, self.ponto_destino)
-            if not ponto_alvo in self.visitados:
-                if ponto_alvo not in self.distancia or self.distancia[ponto_alvo] > self.distancia[ponto_atual] \
-                        + self.grafo.pesos[ponto_atual, ponto_alvo]:
-                    self.distancia[ponto_alvo] = self.distancia[ponto_atual] + self.grafo.pesos[ponto_atual, ponto_alvo]
-                    self.atualizar_distancias(ponto_alvo, ponto_atual)
-                    self.anterior[ponto_alvo] = ponto_atual
+    def proc_arestas(self, pt_atual):
+        for pt_alvo in self.grafo.arestas[pt_atual]:
+            self.dist_prev[pt_alvo] = self.grafo.calc_prev_peso(pt_alvo, self.pt_dest)
+            if not pt_alvo in self.visit:
+                if pt_alvo not in self.dist or self.dist[pt_alvo] > self.dist[pt_atual] \
+                        + self.grafo.pesos[pt_atual, pt_alvo]:
+                    self.dist[pt_alvo] = self.dist[pt_atual] + self.grafo.pesos[pt_atual, pt_alvo]
+                    self.up_dist(pt_alvo, pt_atual)
+                    self.anterior[pt_alvo] = pt_atual
 
-    def buscar_proximo_ponto(self):
+    def get_prox(self):
         ponto_min = float("inf")
         val_min = float("inf")
-        for elemento, valor in self.distancia_prev_fronteira.items():
+        for key, valor in self.dist_prev_front.items():
             if valor < val_min:
                 val_min = valor
-                ponto_min = elemento
+                ponto_min = key
         return ponto_min
         #min(self.distancia_prev_fronteira, key=self.distancia_prev_fronteira.get)
 
-    def executar(self):
-        ponto_atual = self.buscar_origem()
-        while self.nao_visitados:
-            self.distancia_prev[ponto_atual] = self.grafo.calc_previsao_peso(ponto_atual, self.ponto_destino)
-            self.processar_arestas(ponto_atual)
-            self.distancia_visitados[ponto_atual] = self.distancia[ponto_atual]
-            del self.distancia[ponto_atual]
-            del self.distancia_prev_fronteira[ponto_atual]
-            self.visitados.add(ponto_atual)
-            self.nao_visitados.remove(ponto_atual)
-            if ponto_atual == self.ponto_destino: break
-            ponto_atual = self.buscar_proximo_ponto()
+    def start(self):
+        pt_atual = self.get_origem()
+        while self.nao_visit:
+            self.dist_prev[pt_atual] = self.grafo.calc_prev_peso(pt_atual, self.pt_dest)
+            self.proc_arestas(pt_atual)
+            self.dist_visit[pt_atual] = self.dist[pt_atual]
+            del self.dist[pt_atual]
+            del self.dist_prev_front[pt_atual]
+            self.visit.add(pt_atual)
+            self.nao_visit.remove(pt_atual)
+            if pt_atual == self.pt_dest:
+                break
+            pt_atual = self.get_prox()
             self.num_passos += 1
-        self.formatar_caminho()
-        self.distancia_total = self.distancia_visitados[self.ponto_destino]
+        self.get_caminho()
+        self.dist_total = self.dist_visit[self.pt_dest]
         self.executou = True
 
-    def formatar_caminho(self):
-        self.caminho = list()
-        ponto_atual = self.ponto_destino
+    def get_caminho(self):
+        pt_atual = self.pt_dest
         while True:
-            self.caminho.insert(0, ponto_atual)
-            if ponto_atual == self.ponto_origem: break
-            ponto_atual = self.anterior[ponto_atual]
+            self.caminho.insert(0, pt_atual)
+            if pt_atual == self.pt_ori:
+                break
+            pt_atual = self.anterior[pt_atual]
 
 
-class A_Star(_Caminhos_Minimos):
+class AStar(__CaminhosMinimos):
     pass
 
 
-class Dijkstra(_Caminhos_Minimos):
-    def atualizar_distancias(self, ponto_alvo, ponto_atual):
-        self.distancia_prev_fronteira[ponto_alvo] = self.distancia[ponto_atual] + self.grafo.pesos[
-            ponto_atual, ponto_alvo]
+class Dijkstra(__CaminhosMinimos):
+    def up_dist(self, pt_alvo, pt_atual):
+        self.dist_prev_front[pt_alvo] = self.dist[pt_atual] + self.grafo.pesos[pt_atual, pt_alvo]
