@@ -6,132 +6,88 @@ from grafos import *
 from banco_dados import *
 from caminhos_minimos import *
 
-def extrair_tempo(profiler):
-    with open('status.txt','w') as arq:
-        dados_crus = pst.Stats(profiler,stream=arq)
-        dados_crus.strip_dirs().print_stats('(executar)')
+class Coletor:
 
-    status = list()
-    with open('status.txt','r') as arq:
-        for linha in arq:
-            if 'executar' in linha:
-                status.append(linha.split())
+    def __init__(self,grafo,nome_mapa=None,path_grafos=None):
+        """se path_grafo é None ele gera o grafo aleatoriamente"""
+        self.nome_mapa = nome_mapa
 
-    return status[1][4]
+        if path_grafos is None:
+            self.path_grafos = {}
+        else:
+            self.path_grafos = path_grafos
 
-def executar_coleta_mapa(nome_mapa,path_arquivo):
-    dados_grafo = OrderedDict()
-    dados_dij = OrderedDict()
-    dados_ast = OrderedDict()
+        self.grafo = grafo
+        if nome_mapa is None:
+            self.grafo.gerar_grafo(rnd.uniform(1200,1600),rnd.uniform(1200,1600),
+                                   rnd.uniform(800,1200),rnd.uniform(800,1200),rnd.uniform(0.02,0.1))
+        else:
+            self.grafo.gerar_grafo_mapa(path_grafos[nome_mapa],nome_mapa)
 
-    conexao = Conexao('grafos_db')
-    grafo = Grafo(conexao.get_identificacao())
-    grafo.gerar_grafo_mapa(path_arquivo,nome_mapa)
-    dados_grafo['id'] = grafo.ident
-    dados_grafo['nome_mapa'] = grafo.nome_mapa
-    dados_grafo['num_pontos'] = len(grafo)
-    dados_grafo['num_arestas'] = grafo.num_arestas
-    dados_grafo['max_pontos'] = sqrt(((grafo.max_x)**2) + ((grafo.max_y)**2))
-    conexao.inserir_grafo_mapa(grafo)
+        self.profiler = cp.Profile()
+        self.pt_ori, self.pt_dest = rnd.sample(self.grafo.pontos,2)
+        self.dij, self.ast = Dijkstra(self.grafo), AStar(self.grafo)
+        self.executou = False
 
-    origem, destino = rnd.sample(grafo.pontos,2)
-    dados_dij['ponto_origem'] = origem
-    dados_dij['ponto_destino'] = destino
-    dados_ast['ponto_origem'] = origem
-    dados_ast['ponto_destino'] = destino
+    def get_tempo(self):
+        with open('status.txt','w') as arq:
+            dados = pst.Stats(self.profiler,stream=arq)
+            dados.strip_dirs().print_stats('(start)')
 
-    dij = Dijkstra(grafo)
-    dij.ponto_origem = origem
-    dij.ponto_destino = destino
-    ast = A_Star(grafo)
-    ast.ponto_origem = origem
-    ast.ponto_destino = destino
+        stat = list()
 
-    prof = cp.Profile()
-    prof.enable()
-    dij.executar()
-    prof.disable()
+        with open('status.txt','r') as arq:
+            for li in arq.readlines():
+                if 'start' in li:
+                    stat.append((li.split()))
+        return stat[1][4]
 
-    dados_dij['caminho'] = str(dij.caminho)
-    dados_dij['num_passos'] = dij.num_passos
-    dados_dij['distancia_total'] = dij.distancia_total
-    dados_dij['tempo'] = extrair_tempo(prof)
-    dados_dij['id'] = dij.grafo.ident
-    del prof
+    def exec_dij(self):
+        self.dij.pt_ori, self.dij.pt_dest = self.pt_ori, self.pt_dest
+        self.profiler.enable()
+        self.dij.start()
+        self.profiler.disable()
+        self.dij.tempo = self.get_tempo()
 
-    prof = cp.Profile()
-    prof.enable()
-    ast.executar()
-    prof.disable()
+    def exec_ast(self):
+        self.ast.pt_ori, self.ast.pt_dest = self.pt_ori, self.pt_dest
+        self.profiler.enable()
+        self.ast.start()
+        self.profiler.disable()
+        self.ast.tempo = self.get_tempo()
 
-    dados_ast['caminho'] = str(ast.caminho)
-    dados_ast['num_passos'] = ast.num_passos
-    dados_ast['distancia_total'] = ast.distancia_total
-    dados_ast['tempo'] = extrair_tempo(prof)
-    dados_ast['id'] = ast.grafo.ident
-    del prof
+    def start(self):
+        self.exec_dij()
+        self.exec_ast()
+        self.executou = True
 
-    conexao.inserir_dijkstra((dados_dij['ponto_origem'],dados_dij['ponto_destino'],
-                                     dados_dij['caminho'],dados_dij['num_passos'],
-                                     dados_dij['distancia_total'],dados_dij['tempo'],grafo.ident))
-    conexao.inserir_astar((dados_ast['ponto_origem'],dados_ast['ponto_destino'],
-                                  dados_ast['caminho'],dados_ast['num_passos'],
-                                  dados_ast['distancia_total'],dados_ast['tempo'],grafo.ident))
+    def dump_dados(self,con):
+        if self.executou:
+            if self.nome_mapa is None:
+                con.inserir_grafo(self.grafo)
+            else:
+                con.inserir_grafo_mapa(self.grafo)
 
-def executar_coleta(grid_x,grid_y,max_x,max_y,distancia_min):
-    dados_grafo = OrderedDict()
-    dados_dij = OrderedDict()
-    dados_ast = OrderedDict()
+            dados_dij = OrderedDict()
+            dados_dij['ponto_origem'] = self.dij.pt_ori
+            dados_dij['ponto_destino'] = self.dij.pt_dest
+            dados_dij['caminho'] = str(self.dij.caminho)
+            dados_dij['num_passos'] = self.dij.num_passos
+            dados_dij['distancia_total'] = self.dij.dist_total
+            dados_dij['tempo'] = self.dij.tempo
 
-    conexao = Conexao('grafos_db')
-    grafo = Grafo(conexao.get_identificacao())
-    grafo.gerar_grafo_cidade(grid_x,grid_y,max_x,max_y,distancia_min)
-    dados_grafo['id'] = grafo.ident
-    dados_grafo['num_pontos'] = len(grafo)
-    dados_grafo['num_arestas'] = grafo.num_arestas
-    dados_grafo['max_pontos'] = sqrt(((grafo.max_x)**2) + ((grafo.max_y)**2))
-    conexao.inserir_grafo(grafo)
+            dados_ast = OrderedDict()
+            dados_ast['ponto_origem'] = self.ast.pt_ori
+            dados_ast['ponto_destino'] = self.ast.pt_dest
+            dados_ast['caminho'] = str(self.ast.caminho)
+            dados_ast['num_passos'] = self.ast.num_passos
+            dados_ast['distancia_total'] = self.ast.dist_total
+            dados_ast['tempo'] = self.ast.tempo
 
-    origem, destino = rnd.sample(grafo.pontos,2)
-    dados_dij['ponto_origem'] = origem
-    dados_dij['ponto_destino'] = destino
-    dados_ast['ponto_origem'] = origem
-    dados_ast['ponto_destino'] = destino
+            con.inserir_dijkstra((dados_dij['ponto_origem'],dados_dij['ponto_destino'],
+                                  dados_dij['caminho'],dados_dij['num_passos'],
+                                  dados_dij['distancia_total'],dados_dij['tempo'],self.grafo.ident))
 
-    dij = Dijkstra(grafo)
-    dij.ponto_origem = origem
-    dij.ponto_destino = destino
-    ast = A_Star(grafo)
-    ast.ponto_origem = origem
-    ast.ponto_destino = destino
-
-    prof = cp.Profile()
-    prof.enable()
-    dij.executar()
-    prof.disable()
-
-    dados_dij['caminho'] = str(dij.caminho)
-    dados_dij['num_passos'] = dij.num_passos
-    dados_dij['distancia_total'] = dij.distancia_total
-    dados_dij['tempo'] = extrair_tempo(prof)
-    dados_dij['id'] = dij.grafo.ident
-    del prof
-
-    prof = cp.Profile()
-    prof.enable()
-    ast.executar()
-    prof.disable()
-
-    dados_ast['caminho'] = str(ast.caminho)
-    dados_ast['num_passos'] = ast.num_passos
-    dados_ast['distancia_total'] = ast.distancia_total
-    dados_ast['tempo'] = extrair_tempo(prof)
-    dados_ast['id'] = ast.grafo.ident
-    del prof
-
-    conexao.inserir_dijkstra((dados_dij['ponto_origem'],dados_dij['ponto_destino'],
-                                     dados_dij['caminho'],dados_dij['num_passos'],
-                                     dados_dij['distancia_total'],dados_dij['tempo'],grafo.ident))
-    conexao.inserir_astar((dados_ast['ponto_origem'],dados_ast['ponto_destino'],
-                                  dados_ast['caminho'],dados_ast['num_passos'],
-                                  dados_ast['distancia_total'],dados_ast['tempo'],grafo.ident))
+            con.inserir_astar((dados_ast['ponto_origem'],dados_ast['ponto_destino'],
+                               dados_ast['caminho'],dados_ast['num_passos'],
+                               dados_ast['distancia_total'],dados_ast['tempo'],self.grafo.ident))
